@@ -353,6 +353,41 @@ if __name__ == '__main__':
 
     # Rest of the padding and dataloader setup remains the same
 
+    # Allows to pad and get real size of eeg vectors
+    def pad_and_sort_batch(data_loader_batch):
+        """
+        data_loader_batch should be a list of (sequence, target, length) tuples...
+        Returns a padded tensor of sequences sorted from longest to shortest,
+        """
+        input_embeddings, seq_len, input_masks, input_mask_invert, target_ids, target_mask, sentiment_labels, sent_level_EEG, input_raw_embeddings, word_contents, word_contents_attn, subject = tuple(
+            zip(*data_loader_batch))
+
+        raw_eeg = []
+        input_raw_embeddings_lenghts = []
+        for sentence in input_raw_embeddings:
+            input_raw_embeddings_lenghts.append(
+                torch.Tensor([a.size(0) for a in sentence]))
+            raw_eeg.append(pad_sequence(
+                sentence, batch_first=True, padding_value=0).permute(1, 0, 2))
+
+        input_raw_embeddings = pad_sequence(
+            raw_eeg, batch_first=True, padding_value=0).permute(0, 2, 1, 3)
+
+        return input_embeddings, seq_len, input_masks, input_mask_invert, target_ids, target_mask, sentiment_labels, sent_level_EEG, input_raw_embeddings, input_raw_embeddings_lenghts, word_contents, word_contents_attn, subject  # lengths
+
+
+    # train dataloader
+    train_dataloader = DataLoader(
+        train_set, batch_size=batch_size, shuffle=True, num_workers=0, collate_fn=pad_and_sort_batch)  # 4
+    # dev dataloader
+    val_dataloader = DataLoader(
+        dev_set, batch_size=1, shuffle=False, num_workers=0, collate_fn=pad_and_sort_batch)  # 4
+    # dev dataloader
+    test_dataloader = DataLoader(
+        test_set, batch_size=1, shuffle=False, num_workers=0, collate_fn=pad_and_sort_batch)  # 4
+    # dataloaders
+    dataloaders = {'train': train_dataloader,
+                   'dev': val_dataloader, 'test': test_dataloader}
     # Modified model initialization for T5
     pretrained = T5ForConditionalGeneration.from_pretrained('t5-large')
 
