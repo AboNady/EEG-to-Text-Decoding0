@@ -427,7 +427,7 @@ if __name__ == '__main__':
         ######################################################
 
         #model.load_state_dict(torch.load("./checkpoints/decoding_raw_104_h/last/task1_task2_taskNRv2_finetune_BrainTranslator_skipstep1_b4_25_100_5e-05_5e-05_unique_sent.pt"))
-        model.freeze_pretrained_brain()
+        #model.freeze_pretrained_brain()
 
         ''' set up optimizer and scheduler'''
         optimizer_step2 = optim.SGD(filter(
@@ -444,7 +444,7 @@ if __name__ == '__main__':
         print()
         print('=== start Step2 training ... ===')
         # print training layers
-        show_require_grad_layers(model)
+        #show_require_grad_layers(model)
 
         model.to(device)
 
