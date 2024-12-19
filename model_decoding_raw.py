@@ -34,13 +34,15 @@ class ProjectionHead(nn.Module):
         return x
     
 class BrainTranslator(nn.Module):
-    def __init__(self, t5_model, in_feature=840, decoder_embedding_size=1024, additional_encoder_nhead=8, additional_encoder_dim_feedforward=2048):
+    def __init__(self, t5_model, in_feature=1024, decoder_embedding_size=1024, additional_encoder_nhead=8, additional_encoder_dim_feedforward=2048):
         super(BrainTranslator, self).__init__()
         
         # Embedded EEG raw features
         self.hidden_dim = 512
         self.feature_embedded = FeatureEmbedded(input_dim=104, hidden_dim=self.hidden_dim)
-        self.fc = ProjectionHead(embedding_dim=in_feature, projection_dim=in_feature, dropout=0.1)
+        self.fc = ProjectionHead(embedding_dim=self.hidden_dim * 2 if self.feature_embedded.is_bidirectional else self.hidden_dim,
+                               projection_dim=in_feature,
+                               dropout=0.1)
 
         # conv1d
         self.conv1d_point = nn.Conv1d(1, 64, 1, stride=1)
@@ -67,7 +69,7 @@ class BrainTranslator(nn.Module):
         self.encoder = nn.TransformerEncoder(self.encoder_layer, num_layers=12)
         self.layernorm_embedding = nn.LayerNorm(in_feature, eps=1e-05)
 
-        self.brain_projection = ProjectionHead(embedding_dim=in_feature, projection_dim=1024, dropout=0.2)
+        self.brain_projection = ProjectionHead(embedding_dim=in_feature, projection_dim=decoder_embedding_size, dropout=0.2)
         
         # T5
         self.t5 = t5_model
